@@ -1,0 +1,58 @@
+piVersion: autoscaling/v1
+kind: HorizontalPodAutoscaler
+metadata:
+  name: igs-hpa
+  namespace: {{ NAMESPACE }}
+spec:
+  maxReplicas: 6
+  minReplicas: 1
+  scaleTargetRef:
+    apiVersion: extensions/v1beta1
+    kind: Deployment
+    name: petclin
+  targetCPUUtilizationPercentage: 65
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: petclin
+  namespace: {{ NAMESPACE }}
+spec:
+  selector:
+    matchLabels:
+      app: petclin
+  template:
+    metadata:
+      labels:
+        app: petclin
+    spec:
+      containers:
+      - image: registry.airb.com/{{ PROJECT_IMAGE }}
+        name: petclin
+        ports:
+        - containerPort: 8080
+          name: http
+        env:
+        - name: MYSQL_HOST
+          value: "mysql.airb.internal"
+        - name: MYSQL_PORT
+          value: "3306"
+        - name: MYSQL_DATABASE
+          value: "petclinic"
+        - name: MYSQL_USER
+          valueFrom:
+            secretKeyRef:
+              name: {{ CONFIG_SECRET }}
+              key: MYSQL_USER
+        - name: MYSQL_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: {{ CONFIG_SECRET }}
+              key: MYSQL_PASSWORD
+       - name: MYSQL_DATABASE
+          valueFrom:
+            secretKeyRef:
+              name: {{ CONFIG_SECRET }}
+              key: MYSQL_DATABASE
+
+

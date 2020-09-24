@@ -1,0 +1,23 @@
+- hosts: webservers
+  gather_facts: False
+  become: true
+
+  tasks:
+    - name: stop nginx
+      service:
+        name: nginx
+        state: stopped
+    - name: ensure nginx is not installed
+      apt: name=nginx state=absent
+    - name: Recursively remove directory
+      file:
+        path: /var/www/{{ vhost1_Name }}/
+        state: absent
+    - name: Remove nginx config for {{ vhost1_Name }}
+      file:
+        path: /etc/nginx/sites-available/{{ vhost1_Name }}
+        state: absent
+    - name: Remove nginx config for {{ vhost2_Name }}
+      file:
+        path: /etc/nginx/sites-available/{{ vhost2_Name }}
+        state: absent

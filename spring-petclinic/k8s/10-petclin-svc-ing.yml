@@ -1,0 +1,29 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: petclin
+  namespace: {{ namespace }}
+spec:
+  selector:
+    app: petclin
+  ports:
+  - name: web
+    port: 8080
+    targetPort: 8080
+---
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: petclin
+  namespace: {{ namespace }}
+  annotations:
+    kubernetes.io/ingress.class: traefik
+spec:
+  rules:
+  - host: vhost-1.airb.com
+    http:
+      paths:
+      - path: /
+        backend:
+          serviceName: petclin
+          servicePort: web

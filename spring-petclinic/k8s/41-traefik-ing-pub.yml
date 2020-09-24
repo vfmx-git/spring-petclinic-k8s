@@ -1,0 +1,33 @@
+---
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: traefik-pub
+  namespace: kube-system
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: web, websecure
+    cert-manager.io/cluster-issuer: letsencrypt
+    traefik.ingress.kubernetes.io/router.middlewares: kube-system-redirect301@kubernetescrd
+spec:
+  tls:
+  - hosts:
+    - vhost-1.airb.com
+    secretName: vhost-1.airb.com-cert1
+  - hosts:
+    - petclinic.airb.com
+    secretName: petclinic.airb.com-cert1
+  rules:
+  - host: vhost-1.airb.com
+    http:
+      paths:
+      - path: /
+        backend:
+          serviceName: traefik
+          servicePort: https
+  - host: petclinic.airb.com
+    http:
+      paths:
+      - path: /
+        backend:
+          serviceName: traefik
+          servicePort: https

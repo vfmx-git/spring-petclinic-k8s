@@ -1,0 +1,7 @@
+stages:
+  - deploy_nginx
+
+deploy:
+  stage: deploy_nginx
+  script:
+    - cd nginx-install && ./start-run-roles.sh

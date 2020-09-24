@@ -1,0 +1,39 @@
+apiVersion: networking.k8s.io/v1beta1
+kind: Ingress
+metadata:
+  name: traefik-priv
+  namespace: kube-system
+  annotations:
+    ingress.bluemix.net/ALB-ID: "private-crbpsdgpbf0pp58stug0v0-alb1"
+    traefik.ingress.kubernetes.io/router.entrypoints: web, websecure
+spec:
+  rules:
+  - host: vhost-1.airb.internal
+    http:
+      paths:
+      - path: /
+        backend:
+          serviceName: traefik
+          servicePort: http
+  - host: vhost-2.airb.internal
+    http:
+      paths:
+      - path: /
+        backend:
+          serviceName: traefik
+          servicePort: http
+
+  - host: petclinic.airb.internal
+    http:
+      paths:
+      - path: /
+        backend:
+          serviceName: traefik
+          servicePort: http
+  - host: mysql.airb.internal
+    http:
+      paths:
+      - path: /
+        backend:
+          serviceName: traefik
+          servicePort: http

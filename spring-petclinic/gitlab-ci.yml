@@ -1,0 +1,62 @@
+variables:
+  PROJECT_IMAGE_LOGIC: '(if [ "$${CI_COMMIT_TAG}" == "" ]; then echo "$CI_REGISTRY_IMAGE:snapshot"; else echo "$CI_REGISTRY_IMAGE:$CI_COMMIT_REF_NAME"; fi);'
+
+before_script:
+  - docker login -u $DOCKER_USER_LOGIN -p $DOCKER_USER_PSW $CI_REGISTRY
+  - export CI_BUILD_DATE=$(TZ="Europe/Riga" date +%Y%m%d-%H%M)
+
+stages:
+  - build
+  - make_docker
+  - publish
+  - deploy
+
+build:
+  stage: build
+  script:
+    - mvn install -DskipTests
+
+make_docker:
+  stage: make_docker
+  script:
+    - PROJECT_IMAGE=$(eval $PROJECT_IMAGE_LOGIC)
+    - echo building $PROJECT_IMAGE in $CI_PROJECT_DIR for $CI_REGISTRY_IMAGE
+    - docker build -f ./Dockerfile -t $PROJECT_IMAGE .
+
+publish:
+  stage: publish
+  script:
+    - PROJECT_IMAGE=$(eval $PROJECT_IMAGE_LOGIC)
+    - docker push $PROJECT_IMAGE
+
+deployment: &deployment
+  stage: deploy
+  script:
+    - kubectl version
+    - kubectl get all
+    - kubectl apply -f ./k8s
+
+deploy-to-dev:
+  variables:
+    NAMESPACE: petclinic-dev
+    SECRET_NAME: petclinic-dev
+  <<: *deployment
+  only:
+    - master
+
+deploy-to-test:
+  variables:
+    NAMESPACE: petclinic-qa
+    SECRET_NAME: petclinic-qa
+  <<: *deployment
+  only:
+    - tags
+
+deploy-to-prod:
+  variables:
+    NAMESPACE: petclinic-prod
+    SECRET_NAME: petclinic-prod
+  <<: *deployment
+  when: manual
+  only:
+    - tags
