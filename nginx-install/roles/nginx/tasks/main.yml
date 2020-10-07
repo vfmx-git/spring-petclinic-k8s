@@ -14,14 +14,16 @@
       src=../files/index.html.j2
       dest=/var/www/{{ vhost1_Name }}/html/index.html
     when: vhost1_Name is defined
-    register: index
+    notify:
+      - Restart nginx
 
   - name: Copy the nginx config for {{ vhost1_Name }}
     template:
       src=../files/{{ vhost1_Name }}.j2
       dest=/etc/nginx/sites-available/{{ vhost1_Name }}
     when: vhost1_Name is defined
-    register: config1
+    notify:
+      - Restart nginx
 
   - name: Enable new {{ vhost1_Name }}
     file:
@@ -29,29 +31,16 @@
       dest: /etc/nginx/sites-enabled/{{ vhost1_Name }}
       state: link
     when: vhost1_Name is defined
-    register: vhost1_enabled
-
-  - name: Disable nginx default page
-    file:
-      path: /etc/nginx/sites-enabled/default
-      state: absent
-    when: vhost1_Name is defined
-    register: default_disabled
-
-  - name: Enable nginx default page
-    file:
-      src: /etc/nginx/sites-available/default
-      dest: /etc/nginx/sites-enabled/default
-      state: link
-    when: vhost1_Name is undefined
-    register: default_enabled
+    notify:
+      - Restart nginx
 
   - name: Copy the nginx config for {{ vhost2_Name }}
     template:
       src=../files/{{ vhost2_Name }}.j2
       dest=/etc/nginx/sites-available/{{ vhost2_Name }}
     when: vhost2_Name is defined
-    register: config2
+    notify:
+      - Restart nginx
 
   - name: Enable new {{ vhost2_Name }}
     file:
@@ -59,11 +48,22 @@
       dest: /etc/nginx/sites-enabled/{{ vhost2_Name }}
       state: link
     when: vhost2_Name is defined
-    register: vhost2_enabled
+    notify:
+      - Restart nginx
 
-  - name: restart nginx
-    service:
-      name: nginx
-      state: restarted
-    when: vhost1_enabled.changed or vhost2_enabled.changed or default_disabled.changed or default_enabled.changed or index.changed or config1.changed or config2.changed
+  - name: Disable nginx default page
+    file:
+      path: /etc/nginx/sites-enabled/default
+      state: absent
+    when: vhost1_Name is defined or vhost2_Name is defined
+    notify:
+      - Restart nginx
 
+  - name: Enable nginx default page
+    file:
+      src: /etc/nginx/sites-available/default
+      dest: /etc/nginx/sites-enabled/default
+      state: link
+    when: vhost1_Name is undefined and vhost2_Name is undefined
+    notify:
+      - Restart nginx
